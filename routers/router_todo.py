@@ -7,7 +7,7 @@ import uuid
 
 
 
-router = APIRouter()
+router = APIRouter(tags=["Drivers"])
 
 @router.get("/todos/", response_model=List[Task])
 async def get_all_tasks():
