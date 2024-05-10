@@ -9,19 +9,15 @@ import uuid
 
 router = APIRouter()
 
-@router.get("/tasks/", response_model=List[Task])
+@router.get("/todos/", response_model=List[Task])
 async def get_all_tasks():
-    try:
-        tasks = []
-        task_docs = db.collection('tasks').stream()
-        for doc in task_docs:
-            task_data = doc.to_dict()
-            tasks.append(Task(**task_data))
-        return tasks
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    fireBaseobject = db.child("tasks").get().val()
+    if fireBaseobject is not None:
+        resultArray = [value for value in fireBaseobject.values()]
+        return resultArray
+    return []
 
-@router.post("/tasks/", response_model=Task)
+@router.post("/todos/", response_model=Task, status_code=201)
 async def create_task(task: TaskNoId, userData: int = Depends(get_current_user)):
     try:
         task_id = str(uuid.uuid4())
@@ -30,10 +26,10 @@ async def create_task(task: TaskNoId, userData: int = Depends(get_current_user))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/tasks/{task_id}", response_model=Task)
-async def read_task(task_id: str):
+@router.get("/todos/{todo_id}", response_model=Task)
+async def read_task(todo_id: str):
     try:
-        task = db.child('tasks').child(task_id).get().val()
+        task = db.child('tasks').child(todo_id).get().val()
         if task is not None:
             return task
         else:
@@ -41,23 +37,23 @@ async def read_task(task_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/tasks/{task_id}", response_model=Task)
-async def update_task(task_id: str, task: TaskNoId, userData: int = Depends(get_current_user)):
+@router.put("/todos/{todo_id}", status_code=204)
+async def update_task(todo_id: str, task: TaskNoId, userData: int = Depends(get_current_user)):
 
-    task_db = db.child('tasks').child(task_id).get().val()
+    task_db = db.child('tasks').child(todo_id).get().val()
     if task_db is not None:
-        updatedTask = Task(id=task_id, **task.model_dump())
-        return db.child('tasks').child(task_id).update(updatedTask.model_dump())
+        updatedTask = Task(id=todo_id, **task.model_dump())
+        return db.child('tasks').child(todo_id).update(updatedTask.model_dump())
     else:
         raise HTTPException(status_code=404, detail="Task not found")
     
 
-@router.delete("/tasks/{task_id}")
-async def delete_task(task_id: str, userData: int = Depends(get_current_user)):
+@router.delete("/todos/{todo_id}", status_code=204)
+async def delete_task(todo_id: str, userData: int = Depends(get_current_user)):
     try:
-        task_db = db.child('tasks').child(task_id).get().val()
+        task_db = db.child('tasks').child(todo_id).get().val()
         if task_db is not None:
-            return db.child('tasks').child(task_id).remove()
+            return db.child('tasks').child(todo_id).remove()
         else:
             raise HTTPException(status_code=404, detail="Task not found")
     except Exception as e:

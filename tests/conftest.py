@@ -5,17 +5,6 @@ from main import app
 from database.firebase import authSession
 import uuid
 
-@pytest.fixture
-def auth_token():
-    email = "test.auth"+ str(uuid.uuid4()) + "@gmail.com"
-    password = "password123"
-    user = auth.create_user(
-        email=email,
-        password=password
-    )
-    token = authSession.sign_in_with_email_and_password(email=email, password=password)['idToken']
-    return token
-
 @pytest.fixture(scope="session", autouse=True)
 def cleanup(request):
     #Nettoyer le directory une fois fini
@@ -30,22 +19,30 @@ def client():
     return TestClient(app)
 
 @pytest.fixture
-def auth_headers(auth_token):
-    return {"Authorization": f"Bearer {auth_token}"}
+def auth_headers():
+    # Génération des en-têtes d'authentification si nécessaire
+    email = "test.auth"+ str(uuid.uuid4()) + "@gmail.com"
+    password = "password123"
+    user = auth.create_user(
+        email=email,
+        password=password
+    )
+    token = authSession.sign_in_with_email_and_password(email=email, password=password)['idToken']
+    headers = {"Authorization": f"Bearer {token}"}
+    return headers
 
 
 @pytest.fixture
-def driver_id(client):
-    driver_data = {
-        "first_name": "John",
-        "last_name": "Doe",
-        "email": "test."+ str(uuid.uuid4()) + "@example.com",
-        "password": "password123"
+def task_id(client, auth_headers):
+    task_data = {
+        "title": "Task 1",
+        "description": "Description of task 1",
+        "done": False
     }
-    driver = client.post("/api/driver", json=driver_data)
-    
-    driver_id = driver.json()['id']
-    return driver_id
+    task = client.post("/api/todos", json=task_data, headers=auth_headers)
+    task_id =str( task.json()['id'])
+    print(task_id)
+    return task_id
 
 @pytest.fixture
 def valid_user_data():
