@@ -5,10 +5,16 @@ from firebase_admin import credentials
  
 import pyrebase
 import json
-from dotenv import dotenv_values
- 
-config = dotenv_values(".env")
- 
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+config={
+    "FIREBASE_SERVICE_ACCOUNT_KEY": os.getenv("FIREBASE_SERVICE_ACCOUNT_KEY"),
+    "FIREBASE_CONFIG": os.getenv("FIREBASE_CONFIG")
+}
 #from configs.firebase_config import firebase_config
  
 if not firebase_admin._apps:
